@@ -1,32 +1,32 @@
-# 动手学大模型：模型水印
+# 실습으로 배우는 대규모 모델: 모델 워터마킹
 
-导读: 该部分介绍语言模型的水印
+안내: 이 섹션에서는 언어 모델의 워터마킹을 소개합니다.
 
-> 在语言模型生成的内容中嵌入人类无法察觉，但却可以被算法检测的到的“水印”。
+> 언어 모델이 생성한 콘텐츠에 인간은 인지할 수 없지만 알고리즘으로는 탐지할 수 있는 "워터마크"를 삽입합니다.
 
-## 本教程目标
+## 본 튜토리얼 목표
 
-1. 水印嵌入：在语言模型生成内容时嵌入水印
-2. 水印检测：检测给定文本的水印强度
-3. 水印评估：评估水印方法的检测性能
-4. 评估水印的鲁棒性（可选）
+1. 워터마크 삽입: 언어 모델이 콘텐츠를 생성할 때 워터마크 삽입
+2. 워터마크 탐지: 주어진 텍스트의 워터마크 강도 탐지
+3. 워터마크 평가: 워터마크 방법의 탐지 성능 평가
+4. 워터마크의 강건성(Robustness) 평가 (선택 사항)
 
 
 
-## 准备工作
+## 사전 준비
 
-### 2.1 了解X-SIR代码仓库
+### 2.1 X-SIR 코드 저장소 알아보기
 
 https://github.com/zwhe99/X-SIR
 
-X-SIR仓库包含以下内容的实现
+X-SIR 저장소는 다음 내용의 구현을 포함하고 있습니다.
 
-- 三种文本水印算法：X-SIR, SIR和KGW
-- 两种水印去除攻击方法：paraphrase和translation
+- 세 가지 텍스트 워터마크 알고리즘: X-SIR, SIR, KGW
+- 두 가지 워터마크 제거 공격 방법: paraphrase 및 translation
 
 ![img](./assets/x-sir.png)
 
-### 2.2 环境准备
+### 2.2 환경 준비
 
 ```Shell
 git clone https://github.com/zwhe99/X-SIR && cd X-SIR
@@ -36,17 +36,17 @@ pip3 install -r requirements.txt
 # [optional] pip3 install flash-attn==2.3.3
 ```
 
-> requirements.txt里的版本均为建议版本，并非强制要求。
+> requirements.txt에 기재된 버전은 모두 권장 버전이며 필수 사항은 아닙니다.
 
 
 
-## 实操案例
+## 실습 예제
 
-> 使用KGW算法在语言模型生成内容中嵌入水印
+> KGW 알고리즘을 사용하여 언어 모델이 생성한 콘텐츠에 워터마크 삽입하기
 
-### 3.1 数据准备
+### 3.1 데이터 준비
 
-将待输入给语言模型的提示（prompt）组织成jsonl文件：
+언어 모델에 입력할 프롬프트(prompt)를 jsonl 파일로 구성합니다:
 
 ```JSON
 {"prompt": "Ghost of Emmett Till: Based on Real Life Events "}
@@ -55,12 +55,12 @@ pip3 install -r requirements.txt
 ......
 ```
 
-- 每行是一个json object，并至少包含名为“prompt”的键
-- 后续内容以`data/dataset/mc4/mc4.en.jsonl`文件为例。此文件一共包含500条数据，如果觉得模型处理时间过长，可以考虑自行缩减数据。
+- 각 줄은 하나의 json 객체(object)이며, 최소한 "prompt"라는 이름의 키를 포함해야 합니다.
+- 이후 내용은 `data/dataset/mc4/mc4.en.jsonl` 파일을 예시로 사용합니다. 이 파일은 총 500개의 데이터를 포함하고 있으며, 모델 처리 시간이 너무 길다고 느껴지면 데이터를 직접 줄여서 사용할 수 있습니다.
 
-### 3.2 水印嵌入
+### 3.2 워터마크 삽입
 
-- 选择模型和水印算法。这里我们选择`baichuan-inc/Baichuan-7B`模型，以及`KGW`水印算法
+- 모델과 워터마크 알고리즘을 선택합니다. 여기서는 `baichuan-inc/Baichuan-7B` 모델과 `KGW` 워터마크 알고리즘을 선택합니다.
 
   - ```Shell
     MODEL_NAME=baichuan-inc/Baichuan-7B
@@ -68,7 +68,7 @@ pip3 install -r requirements.txt
     WATERMARK_METHOD_FLAG="--watermark_method kgw"
     ```
 
-- 生成内容，并嵌入水印
+- 콘텐츠를 생성하고 워터마크를 삽입합니다.
 
   - ```Shell
     python3 gen.py \
@@ -80,9 +80,9 @@ pip3 install -r requirements.txt
         $WATERMARK_METHOD_FLAG
     ```
 
-  - 此命令将模型生成的内容保存至输出文件：`gen/$MODEL_ABBR/kgw/mc4.en.mod.jsonl`
+  - 이 명령은 모델이 생성한 콘텐츠를 출력 파일(`gen/$MODEL_ABBR/kgw/mc4.en.mod.jsonl`)에 저장합니다.
 
-  - 输出文件的格式如下，其中response为模型的输出内容：
+  - 출력 파일의 형식은 다음과 같으며, 여기서 response는 모델의 출력 내용입니다:
 
     - ```JSON
       {"prompt": "Ghost of Emmett Till: Based on Real Life Events ", "response": ".In August if 1955 African American Emmett Louis Till (21)\nThe second part of The Man From Waco, about Dan Millers trial for murdering his friend Michael Capps in a Texas wiener wrastle as I believe the statute says called it then; back at that time that would have surely occurred since Dan kept his pistol in one of those watery doggy bags he keeps around to clean himself with after emptying can into a nearby lake just minutes before committing his crime. If what we read is true thats exactly where Dan left his stolen gun and later used it in the robbery gone wrong which killed two innocent boys when his own accomplice got into an argument over not being paid enough therefore wanting out. This angered Miller whos history of mental instability could be taken one way or another but this criminal act was unavoidable once they entered FBIs hands and some other very powerful law officers who were involved either directly"}
@@ -93,11 +93,11 @@ pip3 install -r requirements.txt
 
 
 
-### 3.3 水印检测
+### 3.3 워터마크 탐지
 
-> 水印检测即给定一段文本，计算该段文本的水印强度（z-score）。
+> 워터마크 탐지란 주어진 텍스트에 대해 해당 텍스트의 워터마크 강도(z-score)를 계산하는 것입니다.
 
-- 计算**有水印**文本的水印强度
+- **워터마크가 있는** 텍스트의 워터마크 강도 계산
 
   - ```python
     python3 detect.py \
@@ -107,7 +107,7 @@ pip3 install -r requirements.txt
         $WATERMARK_METHOD_FLAG
     ```
 
-- 计算**无水印**文本的水印强度
+- **워터마크가 없는** 텍스트의 워터마크 강도 계산
 
   - ```python
     python3 detect.py \
@@ -117,7 +117,7 @@ pip3 install -r requirements.txt
         $WATERMARK_METHOD_FLAG
     ```
 
-- 输出的文件格式为：
+- 출력 파일 형식은 다음과 같습니다:
 
   - ```JSON
     {"z_score": 12.105422509165574, "prompt": "Ghost of Emmett Till: Based on Real Life Events ", "response": ".In August if 1955 African American Emmett Louis Till (21)\nThe second part of The Man From Waco, about Dan Millers trial for murdering his friend Michael Capps in a Texas wiener wrastle as I believe the statute says called it then; back at that time that would have surely occurred since Dan kept his pistol in one of those watery doggy bags he keeps around to clean himself with after emptying can into a nearby lake just minutes before committing his crime. If what we read is true thats exactly where Dan left his stolen gun and later used it in the robbery gone wrong which killed two innocent boys when his own accomplice got into an argument over not being paid enough therefore wanting out. This angered Miller whos history of mental instability could be taken one way or another but this criminal act was unavoidable once they entered FBIs hands and some other very powerful law officers who were involved either directly", "biases": null}
@@ -126,12 +126,12 @@ pip3 install -r requirements.txt
     ......
     ```
 
-- 肉眼查看一下两个文件水印强度的区别
+- 두 파일의 워터마크 강도 차이를 직접 확인해 보세요.
 
-### 3.4 水印评估
+### 3.4 워터마크 평가
 <a name="eval"></a>
 
-- 输入水印检测的z-score文件，计算检测准确度，绘制ROC曲线
+- 워터마크 탐지 z-score 파일을 입력하여 탐지 정확도를 계산하고 ROC 곡선을 그립니다.
 
   - ```Shell
     python3 eval_detection.py \
@@ -150,25 +150,25 @@ pip3 install -r requirements.txt
 
 ![img](./assets/curve.png)
 
-## 评估水印的鲁棒性（可选）
+## 워터마크의 강건성 평가 (선택 사항)
 
-> 对水印文本进行paraphrase和translation攻击后，重新评估其检测效果
+> 워터마크 텍스트에 paraphrase 및 translation 공격을 수행한 후 탐지 효과를 재평가합니다.
 
-### 4.1 准备工作
+### 4.1 사전 준비
 
-我们使用gpt-3.5-turbo-1106模型对水印文本进行paraphrase和translation。也可以自行选择其它工具。
+gpt-3.5-turbo-1106 모델을 사용하여 워터마크 텍스트에 대해 paraphrase 및 translation을 수행합니다. 다른 도구를 직접 선택하여 사용할 수도 있습니다.
 
-- 设置openai的apikey
+- OpenAI의 API 키 설정
 
   - ```Shell
     export OPENAI_API_KEY=xxxx
     ```
 
-- 修改`attack/const.py`中的RPM (requests per min) and TPM (tokens per min)
+- `attack/const.py`의 RPM (requests per min) 및 TPM (tokens per min) 수정
 
-### 4.2 进行攻击（以翻译为例）
+### 4.2 공격 수행 (번역을 예시로)
 
-- 将水印文本翻译成中文
+- 워터마크 텍스트를 중국어로 번역
 
   - ```Shell
     python3 attack/translate.py \
@@ -179,14 +179,14 @@ pip3 install -r requirements.txt
         --tgt_lang zh
     ```
 
-- 重新评估
+- 재평가
 
-  -  见[3.4](#eval)
+  - [3.4](#eval) 참조
 
-- 比较攻击前后水印性能的变化
+- 공격 전후의 워터마크 성능 변화 비교
 
 
 
-## 进阶练习
+## 심화 연습
 
-- 查看[X-SIR](https://github.com/zwhe99/X-SIR)文档，学习使用其它两种（X-SIR，SIR）算法，并评估其在不同攻击方法下的性能
+- [X-SIR](https://github.com/zwhe99/X-SIR) 문서를 확인하여 다른 두 가지(X-SIR, SIR) 알고리즘의 사용법을 익히고, 다양한 공격 방법 하에서의 성능을 평가해 보세요.

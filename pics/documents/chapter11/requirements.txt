@@ -1,8 +1,0 @@
-# 선택 사항: LLaMA-Factory 직접 설치
-# -e git+https://github.com/hiyouga/LLaMA-Factory.git@52f25651a2016ddede2283be17cf40c2c1b906ed#egg=llamafactory
-torch==2.6.0
-tqdm==4.67.1
-pandas==2.2.3
-transformers==4.51.3
-datasets==3.5.0
-trl==0.9.4

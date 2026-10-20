@@ -1,6 +1,0 @@
-.DS_Store
-__pycache__/
-*.py[cod]
-*$py.class
-_pdf_img_inspect/
-pdf_status.txt

@@ -1,49 +1,51 @@
-# 动手学大模型：RLHF
+# 실습으로 배우는 대규모 모델: RLHF
 
-> 本实验手册翻译并整合了网络资料 [blog](https://newfacade.github.io/notes-on-reinforcement-learning/17-ppo-trl.html) & [trl examples](https://github.com/huggingface/trl/blob/main/examples/notebooks/gpt2-sentiment.ipynb)
+> 본 실습 매뉴얼은 온라인 자료 [blog](https://newfacade.github.io/notes-on-reinforcement-learning/17-ppo-trl.html) 및 [trl examples](https://github.com/huggingface/trl/blob/v0.8.0/examples/notebooks/gpt2-sentiment.ipynb)를 번역 및 통합한 것입니다.
 
-复现实验配置：单卡 NVDIA A800-SXM4-80GB 占用 10097MiB，训练耗时 35min19s。
+재현 실험 환경 구성: 단일 카드 NVIDIA A800-SXM4-80GB에서 10097MiB 점유, 학습 소요 시간 35분 19초.
 
-阅读教程：[slide](./RLHF.pdf)
+튜토리얼 읽기: [slide](./RLHF.pdf)
 
-notebook：[notebook](./RLHF.ipynb)
+notebook: [notebook](./RLHF.ipynb)
 
-## PPO 如何运作
-1. Rollout：语言模型根据 query 生成响应。
-2. Evaluation：查询和响应使用函数、模型、人工反馈或它们的某种组合进行评估。此过程应为每个查询/响应对生成一个**标量值**。
-3. Optimization：在优化步骤中，查询/响应对用于计算序列中标记的对数概率。这是通过训练的模型和参考模型完成的。两个输出之间的 KL 散度用作额外的奖励信号，以确保生成的响应不会偏离参考语言模型太远。然后使用 PPO 训练主动语言模型。
+## PPO 작동 방식
+1. Rollout: 언어 모델이 query에 따라 응답을 생성합니다.
+2. Evaluation: 쿼리와 응답은 함수, 모델, 인간 피드백 또는 이들의 조합을 사용하여 평가됩니다. 이 과정은 각 쿼리/응답 쌍에 대해 하나의 **스칼라 값**을 생성해야 합니다.
+3. Optimization: 최적화 단계에서는 쿼리/응답 쌍을 사용하여 시퀀스 내 토큰의 로그 확률을 계산합니다. 이는 학습 중인 모델과 참조 모델(Reference Model)을 통해 수행됩니다. 두 출력 간의 KL 발산(KL-divergence)은 생성된 응답이 참조 언어 모델에서 너무 멀리 벗어나지 않도록 보장하는 추가 보상 신호로 사용됩니다. 그런 다음 PPO를 사용하여 활성 언어 모델을 학습합니다.
 <div style="text-align: center">
 <img src='figs/trl1.png' width='600'>
-<p style="text-align: center;"> <b>图:</b> PPO 流程图 </p>
+<p style="text-align: center;"> <b>그림:</b> PPO 흐름도 </p>
 </div>
 
-# 微调 GPT-2 以生成积极评论  
-> 通过使用 BERT 情感分类器作为奖励函数，优化 GPT-2 以生成积极的 IMDB 电影评论。
+# 긍정적인 리뷰를 생성하도록 GPT-2 파인튜닝하기
+> BERT 감성 분류기를 보상 함수로 사용하여 긍정적인 IMDB 영화 리뷰를 생성하도록 GPT-2를 최적화합니다.
 
 <div style="text-align: center">
 <img src='figs/gpt2_bert_training.png' width='600'>
-<p style="text-align: center;"> <b>图：</b> 微调 GPT-2 的实验设置</p>
+<p style="text-align: center;"> <b>그림:</b> GPT-2 파인튜닝 실험 설정</p>
 </div>
 
-我们微调 GPT-2 以基于 IMDB 数据集生成积极的电影评论。该模型会接收真实评论的开头部分，并需要生成积极的后续内容。为了奖励积极的后续内容，我们使用 BERT 分类器来分析生成句子的情感，并将分类器的输出作为 PPO 训练的奖励信号。
+IMDB 데이터셋을 기반으로 긍정적인 영화 리뷰를 생성하도록 GPT-2를 파인튜닝합니다. 이 모델은 실제 리뷰의 앞부분을 입력받아 긍정적인 후속 내용을 생성해야 합니다. 긍정적인 후속 내용에 보상을 주기 위해 BERT 분류기를 사용하여 생성된 문장의 감성을 분석하고, 분류기의 출력을 PPO 학습의 보상 신호로 사용합니다.
 
-## 实验设置
+## 실험 설정
 
-### 下载模型和数据
-数据集
+### 모델 및 데이터 다운로드
+> 기본적으로 공식 Hugging Face 허브에서 바로 다운로드할 수 있으며, 해외망 연결이 제한된 환경의 경우 `export HF_ENDPOINT=https://hf-mirror.com` 설정을 함께 사용할 수 있습니다.
+
+데이터셋
 ```bash
-export HF_ENDPOINT=https://hf-mirror.com; huggingface-cli download --resume-download stanfordnlp/imdb --local-dir dataset/imdb --repo-type dataset
+huggingface-cli download --resume-download stanfordnlp/imdb --local-dir dataset/imdb --repo-type dataset
 ```
-参考模型
+참조 모델
 ```bash
-export HF_ENDPOINT=https://hf-mirror.com; huggingface-cli download --resume-download lvwerra/gpt2-imdb --local-dir model/gpt2-imdb
+huggingface-cli download --resume-download lvwerra/gpt2-imdb --local-dir model/gpt2-imdb
 ```
-奖励模型
+보상 모델
 ```bash
-export HF_ENDPOINT=https://hf-mirror.com; huggingface-cli download --resume-download lvwerra/distilbert-imdb --local-dir model/distilbert-imdb
+huggingface-cli download --resume-download lvwerra/distilbert-imdb --local-dir model/distilbert-imdb
 ```
 
-### 导入依赖项
+### 의존성 임포트
 
 
 ```python
@@ -67,7 +69,7 @@ from trl import PPOTrainer, PPOConfig, AutoModelForCausalLMWithValueHead
 from trl.core import LengthSampler
 ```
 
-### 配置
+### 설정
 
 
 ```python
@@ -87,12 +89,12 @@ import wandb
 wandb.init()
 ```
 
-你可以看到我们加载了一个名为 `gpt2_imdb` 的 GPT-2 模型。该模型在 IMDB 数据集上额外微调了 1 个 epoch，使用的是 Hugging Face 的[脚本](https://github.com/huggingface/transformers/blob/main/examples/legacy/run_language_modeling.py)（无特殊设置）。其余参数主要取自原始论文《[Fine-Tuning Language Models from Human Preferences](https://huggingface.co/papers/1909.08593)》。该模型以及 BERT 模型均可在 Hugging Face 的模型库中获取，具体链接在[这里](https://huggingface.co/models)。
+여기서 `gpt2_imdb`라는 이름의 GPT-2 모델을 로드한 것을 볼 수 있습니다. 이 모델은 Hugging Face의 [스크립트](https://github.com/huggingface/transformers/blob/v4.40.0/examples/legacy/run_language_modeling.py)(별도 특수 설정 없음)를 사용하여 IMDB 데이터셋에서 1 에폭 동안 추가 파인튜닝된 모델입니다. 나머지 파라미터는 주로 원 논문인 <[Fine-Tuning Language Models from Human Preferences](https://huggingface.co/papers/1909.08593)>에서 가져왔습니다. 이 모델과 BERT 모델은 모두 Hugging Face 모델 허브에서 가져올 수 있으며 구체적인 링크는 [여기](https://huggingface.co/models)에 있습니다.
 
-## 加载数据和模型
+## 데이터 및 모델 로드
 
-### 加载 IMDB 数据集  
-IMDB 数据集包含了 50,000 条电影评论，并标注了“积极”/“消极”的情感反馈。我们将 IMDB 数据集加载到一个 DataFrame 中，并筛选出至少 200 个字符的评论。然后，我们对每条文本进行分词，并使用 `LengthSampler` 将其随机截断为指定长度。
+### IMDB 데이터셋 로드
+IMDB 데이터셋은 50,000개의 영화 리뷰를 포함하며 "긍정"/"부정" 감성 피드백이 라벨링되어 있습니다. IMDB 데이터셋을 DataFrame으로 로드하고 최소 200자 이상인 리뷰만 필터링합니다. 그런 다음 각 텍스트를 토크나이징하고 `LengthSampler`를 사용하여 지정된 길이로 무작위 절단(truncate)합니다.
 
 
 ```python
@@ -142,8 +144,8 @@ def collator(data):
     return dict((key, [d[key] for d in data]) for key in data[0])
 ```
 
-### 加载预训练的 GPT2 语言模型
-我们加载带有值头（value head）的 GPT2 模型和分词器。我们加载了两次模型；第一个模型用于优化，而第二个模型作为参考，用于计算与初始点的 KL 散度（KL-divergence）。这在 PPO 训练中作为额外的奖励信号，以确保优化后的模型不会偏离原始语言模型太远。
+### 사전학습된 GPT2 언어 모델 로드
+가치 헤드(value head)가 있는 GPT2 모델과 토크나이저를 로드합니다. 모델을 두 번 로드하는데, 첫 번째 모델은 최적화에 사용되고 두 번째 모델은 시작점과의 KL 발산(KL-divergence)을 계산하기 위한 참조 모델(reference model)로 사용됩니다. 이는 최적화된 모델이 원래 언어 모델에서 너무 멀리 벗어나지 않도록 보장하기 위해 PPO 학습에서 추가 보상 신호로 사용됩니다.
 
 
 ```python
@@ -154,8 +156,8 @@ tokenizer = AutoTokenizer.from_pretrained(config.model_name)
 tokenizer.pad_token = tokenizer.eos_token
 ```
 
-### 初始化 PPOTrainer  
-`PPOTrainer` 负责后续的设备分配和优化：
+### PPOTrainer 초기화
+`PPOTrainer`는 이후의 디바이스 할당 및 최적화를 담당합니다:
 
 
 ```python
@@ -165,8 +167,8 @@ ppo_trainer = PPOTrainer(
 ```
 
 
-### 加载 BERT 分类器  
-我们加载了一个在 IMDB 数据集上微调过的 BERT 分类器。
+### BERT 분류기 로드
+IMDB 데이터셋에서 파인튜닝된 BERT 분류기를 로드합니다.
 
 
 ```python
@@ -181,7 +183,7 @@ sentiment_pipe = pipeline(
     Device set to use cuda:0
 
 
-模型输出的是负面类和正面类的 logits。我们将使用正面类的 logits 作为语言模型的奖励信号。
+모델이 출력하는 것은 부정 클래스와 긍정 클래스의 로짓(logits)입니다. 긍정 클래스의 로짓을 언어 모델의 보상 신호로 사용합니다.
 
 
 ```python
@@ -211,8 +213,8 @@ sentiment_pipe(text, **sent_kwargs)
 
 
 
-### 生成设置  
-对于响应生成，我们仅使用采样方法，并确保关闭 top-k 和核采样（nucleus sampling），同时设置一个最小长度。
+### 생성 설정
+응답 생성을 위해 샘플링 방법만 사용하며, top-k와 뉴클리어스 샘플링(nucleus sampling)을 끄고 최소 길이를 설정합니다.
 
 
 ```python
@@ -225,14 +227,14 @@ gen_kwargs = {
 }
 ```
 
-## 优化模型
+## 모델 최적화
 
-### 训练循环
+### 학습 루프
 
-训练循环包括以下主要步骤：
-1. 从策略网络（GPT-2）中获取查询响应  
-2. 从 BERT 中获取查询/响应的情感  
-3. 使用 PPO 优化策略，利用（查询、响应、奖励）三元组  
+학습 루프는 다음과 같은 주요 단계로 구성됩니다:
+1. 정책 네트워크(GPT-2)에서 쿼리 응답 가져오기
+2. BERT에서 쿼리/응답의 감성 점수 가져오기
+3. (쿼리, 응답, 보상) 삼중항을 활용하여 PPO로 정책 최적화하기
 
 
 ```python
@@ -284,16 +286,16 @@ for epoch, batch in enumerate(tqdm(ppo_trainer.dataloader)):
     100%|██████████| 194/194 [35:19<00:00, 10.92s/it]
 
 
-### 训练进展  
-如果你正在使用 Weights & Biases 跟踪训练进展，你应该会看到类似于下图的曲线。查看 wandb.ai 上的交互式示例报告：[链接](https://wandb.ai/huggingface/trl/runs/w9l3110g)。  
+### 학습 진행 상황
+Weights & Biases를 사용하여 학습 진행 상황을 추적하고 있다면 아래 그림과 유사한 곡선을 볼 수 있을 것입니다. wandb.ai의 인터랙티브 예제 보고서를 확인해 보세요: [링크](https://wandb.ai/huggingface/trl/runs/w9l3110g).  
 <div style="text-align: center">
 <img src='figs/gpt2_tuning_progress.png' width='800'>
-<p style="text-align: center;"> <b>图：</b> 训练期间奖励均值的演变 </p>
+<p style="text-align: center;"> <b>그림:</b> 학습 중 평균 보상의 변화 추이 </p>
 </div>  
-可以观察到，经过几次优化步骤后，模型开始生成更积极的输出。  
+몇 번의 최적화 단계를 거친 후 모델이 더 긍정적인 출력을 생성하기 시작하는 것을 관찰할 수 있습니다.  
 
-## 模型检查  
-让我们从 IMDB 数据集中检查一些示例。我们可以使用 `ref_model` 来比较优化后的模型 `model` 与优化前的模型。
+## 모델 검사
+IMDB 데이터셋에서 몇 가지 예제를 확인해 봅시다. `ref_model`을 사용하여 최적화된 모델 `model`과 최적화 이전 모델을 비교할 수 있습니다.
 
 
 ```python
@@ -502,7 +504,7 @@ df_results
 </table>
 
 
-通过观察生成序列的奖励均值/中位数，我们发现了显著的差异。
+생성된 시퀀스의 보상 평균/중앙값을 관찰하면 뚜렷한 차이를 확인할 수 있습니다.
 
 
 ```python
@@ -528,8 +530,8 @@ display(df_results[["rewards (before)", "rewards (after)"]].median())
     dtype: float64
 
 
-## 保存模型  
-最后，我们保存模型以供后续使用。
+## 모델 저장
+마지막으로 추후 사용을 위해 모델을 저장합니다.
 
 
 ```python
@@ -546,4 +548,3 @@ tokenizer.save_pretrained("model/gpt2-imdb-pos-v2")
      'model/gpt2-imdb-pos-v2/merges.txt',
      'model/gpt2-imdb-pos-v2/added_tokens.json',
      'model/gpt2-imdb-pos-v2/tokenizer.json')
-

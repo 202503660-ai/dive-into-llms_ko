@@ -1,66 +1,66 @@
-# 动手学大模型：大模型知识编辑
-导读: 语言模型的编辑方法和工具
-> 想操控语言模型在对指定知识的记忆？让我们选择合适的编辑方法，对特定知识进行编辑，并将对编辑后的模型进行验证！
+# 밑바닥부터 시작하는 대규모 모델: 대규모 모델 지식 편집
+들어가며: 언어 모델의 편집 방법과 도구
+> 특정 지식에 대한 언어 모델의 기억을 제어하고 싶으신가요? 적절한 편집 방법을 선택하여 특정 지식을 편집하고, 편집된 모델을 검증해 봅시다!
 
-## 1. 本教程目标：
+## 1. 본 튜토리얼의 목표:
 
-- 熟悉使用EasyEdit工具包
-- 掌握语言模型的编辑方法（最简）
-- 了解不同类型的编辑方法的选型和应用场景
+- EasyEdit 툴킷 사용법 익히기
+- 언어 모델 편집 방법(기초) 마스터하기
+- 다양한 유형의 편집 방법 선택 기준 및 응용 시나리오 이해하기
 
-## 2. 工作准备：
-### 2.1 了解EasyEdit
+## 2. 사전 준비:
+### 2.1 EasyEdit 알아보기
 
 https://github.com/zjunlp/EasyEdit
 
-EasyEdit 是一个用于编辑语言模型的 Python 包，如 GPT-J、Llama、GPT-NEO、GPT2、T5等，其目标是针对一个特定的知识有效地改变语言模型的行为，而不会对其他输入的性能产生负面影响，同时易于使用且易于扩展。
+EasyEdit는 GPT-J, Llama, GPT-NEO, GPT2, T5 등 언어 모델을 편집하기 위한 Python 패키지로, 다른 입력에 대한 성능에 부정적인 영향을 주지 않으면서 특정 지식에 대해 언어 모델의 행동을 효과적으로 변경하는 것을 목표로 하며, 사용하기 쉽고 확장하기 편리합니다.
 
-EasyEdit 集成了现有的流行的编辑方法：
+EasyEdit는 현재 널리 사용되는 편집 방법들을 통합하여 제공합니다:
 ![](./assets/1.png)
 
-### 2.2 主要框架
+### 2.2 주요 프레임워크
 
 ![](./assets/2.png)
-EasyEdit包含一个统一的Editor、Method和Evaluate框架，分别代表编辑场景、编辑技术和评估方法。
-- Editor：描述工作场景，包含待编辑的模型，待编辑的知识，以及其他必要的超参数。
-- Method：所使用的具体知识编辑方法（例如ROME、MEND等）。
-- Evaluate：评估知识编辑性能的指标，包含了可靠性、通用性、局部性、可移植性。
-- Trainer：有些编辑方法需要一定的训练过程，由Trainer模块实现。
-## 3. 安装环境：
+EasyEdit는 통합된 Editor, Method 및 Evaluate 프레임워크를 포함하며, 각각 편집 시나리오, 편집 기술 및 평가 방법을 나타냅니다.
+- Editor: 작업 시나리오를 기술하며, 편집할 모델, 편집할 지식 및 기타 필요한 하이퍼파라미터를 포함합니다.
+- Method: 사용하는 구체적인 지식 편집 방법(예: ROME, MEND 등)입니다.
+- Evaluate: 지식 편집 성능을 평가하는 지표로, 신뢰성(Reliability), 일반화(Generalization), 지역성(Locality), 이식성(Portability)을 포함합니다.
+- Trainer: 일부 편집 방법은 일정한 학습 과정을 필요로 하며, 이는 Trainer 모듈을 통해 구현됩니다.
+## 3. 환경 설치:
 ```
 git clone https://github.com/zjunlp/EasyEdit.git
-（可选）conda create -n EasyEdit python=3.9.7
+(선택 사항) conda create -n EasyEdit python=3.9.7
 cd EasyEdit
 pip install -r requirements.txt
 ```
-## 4. 编辑案例
-> 目标：改变GPT-2-XL的知识记忆，将梅西(Lionel Messi)的职业从足球改成篮球(football->basketball). 
-步骤：
-- 选择编辑方法，准备参数
-- 准备知识编辑的数据
-- 实例化Editor
-- Run！
-下面以ROME方法为例具体介绍：
+## 4. 편집 실습 사례
+> 목표: GPT-2-XL의 지식 기억을 변경하여 리오넬 메시(Lionel Messi)의 종목을 축구에서 농구로 변경하기 (football->basketball). 
+단계:
+- 편집 방법 선택 및 파라미터 준비
+- 지식 편집을 위한 데이터 준비
+- Editor 인스턴스화
+- 실행(Run)!
+아래에서는 ROME 방법을 예시로 구체적으로 소개합니다:
 ### 4.1 ROME
-Jupiter Notebook: [https://colab.research.google.com/drive/1KkyWqyV3BjXCWfdrrgbR-QS3AAokVZbr?usp=sharing#scrollTo=zWfGkNb9FBJQ] 
-- 选择编辑方法，准备参数
-  - 编辑方法选择为ROME，准备ROME和GPT2-XL所需要的参数。
-  - 例如：alg_name: "ROME"，model_name: "./hugging_cache/gpt2-xl"或为本地该模型的路径，"device": 使用的GPU序号
-  - 其余参数可保持默认
+Jupyter Notebook: [https://colab.research.google.com/drive/1KkyWqyV3BjXCWfdrrgbR-QS3AAokVZbr?usp=sharing#scrollTo=zWfGkNb9FBJQ] 
+- 편집 방법 선택 및 파라미터 준비
+  - 편집 방법으로 ROME을 선택하고, ROME과 GPT2-XL에 필요한 파라미터를 준비합니다.
+  - 예: alg_name: "ROME", model_name: "./hugging_cache/gpt2-xl" 또는 로컬 모델 경로, "device": 사용할 GPU 번호
+  - 나머지 파라미터는 기본값으로 유지할 수 있습니다.
 ![](./assets/3.png)
-- 准备知识编辑的数据
+- 지식 편집을 위한 데이터 준비
     ```
     prompts = ['Question:What sport does Lionel Messi play? Answer:'] # x_e
     ground_truth = ['football'] # y
     target_new = ['basketball'] # y_e
     subject = ['Lionel Messi'] 
     ```
-- 实例化Editor，将准备好的参数传入BaseEditor类进行实例化，得到定制的Editor实例。
+- Editor 인스턴스화: 준비된 파라미터를 BaseEditor 클래스에 전달하여 인스턴스화하고, 커스텀 Editor 인스턴스를 얻습니다.
     ```
     hparams = ROMEHyperParams.from_hparams('./hparams/ROME/gpt2-xl.yaml')
     editor=BaseEditor.from_hparams(hparams)
     ```
-- Run! 调用editor的edit方法：
+- 실행(Run)! editor의 edit 메서드를 호출합니다:
     ```
     metrics, edited_model, _ = editor.edit(
         prompts=prompts,
@@ -71,13 +71,13 @@ Jupiter Notebook: [https://colab.research.google.com/drive/1KkyWqyV3BjXCWfdrrgbR
     )
     ```
 ![](./assets/4.png)
-> 备注：首次编辑某个模型时会下载Wiki语料，并为该模型计算各层的状态（stats_dir: "./data/stats"）并存下，在后续的每次编辑中复用。因此，首次编辑有所耗时，确保网络通畅的情况下可耐心等待。
-### 4.2 验证与评估
-editor.edit会返回metrics（由EasyEdit的Evaluate模块计算）。形式为：
+> 참고: 특정 모델을 처음 편집할 때는 Wiki 코퍼스를 다운로드하고 해당 모델의 각 레이어 상태를 계산하여 저장(stats_dir: "./data/stats")한 뒤, 이후 편집에서 재사용합니다. 따라서 첫 편집 시에는 시간이 다소 소요될 수 있으니 네트워크가 원활한 상태에서 잠시 기다려 주세요.
+### 4.2 검증 및 평가
+editor.edit는 metrics(EasyEdit의 Evaluate 모듈에서 계산됨)를 반환합니다. 형식은 다음과 같습니다:
 ![](./assets/5.png)
-要得到通用性、局部性、可移植性的数值，需要在edit方法中传入用于评估的数据。
+일반화(Generalization), 지역성(Locality), 이식성(Portability) 수치를 얻으려면 edit 메서드에 평가용 데이터를 전달해야 합니다.
 
-以局部性为例，会导致edit方法计算局部性的指标，即在locality_inputs上模型回答的正确率。
+지역성(Locality)을 예로 들면, 아래 코드를 통해 edit 메서드가 지역성 지표(즉, locality_inputs에 대한 모델 답변의 정확도)를 계산하게 됩니다.
 ```
 locality_inputs = {
     'neighborhood':{
@@ -93,7 +93,7 @@ metrics, edited_model, _ = editor.edit(
     keep_original_weight=False
 )
 ```
-或者直接比较前后模型的generte行为。
+또는 편집 전후 모델의 생성(generate) 동작을 직접 비교할 수도 있습니다.
 ```
 generation_prompts = [
     "Lionel Messi, the",
@@ -113,9 +113,9 @@ post_edit_outputs = edited_model.generate(
     attention_mask=batch['attention_mask'].to('cuda'),
     max_new_tokens=3)
 ```
-## 5. 规模化的编辑（可选）
-### 5.1 Batch edit
-多条数据可以形成并列的列表同时传入edit方法进行batch edit，此时MEMIT为最佳方法。（https://colab.research.google.com/drive/1P1lVklP8bTyh8uxxSuHnHwB91i-1LW6Z）
+## 5. 대규모 편집 (선택 사항)
+### 5.1 배치 편집 (Batch edit)
+여러 개의 데이터를 병렬 리스트 형태로 구성하여 edit 메서드에 동시에 전달함으로써 배치 편집(batch edit)을 수행할 수 있으며, 이 경우 MEMIT가 가장 적합한 방법입니다. (https://colab.research.google.com/drive/1P1lVklP8bTyh8uxxSuHnHwB91i-1LW6Z)
 ```
 prompts = ['Question:What sport does Lionel Messi play? Answer:',
             'The law in Ikaalinen declares the language']
@@ -123,7 +123,7 @@ ground_truth = ['football', 'Finnish']
 target_new = ['basketball', 'Swedish']
 subject = ['Lionel Messi', 'Ikaalinen']
 ```
-### 5.2 Benchmark上测试
+### 5.2 벤치마크(Benchmark) 테스트
 - Counterfact
 - ZsRE
 ```
