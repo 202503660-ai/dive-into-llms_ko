@@ -1,3 +1,5 @@
+원 레포 전체를 Gemini 4 Argon을 활용하여 번역한 레포지토리입니다. 아직 수정중입니다.
+
 <p align="center">
 <h1 align="center"><밑바닥부터 시작하는 대규모 모델(Dive into LLMs)> 시리즈 프로그래밍 실습 튜토리얼</h1>
 </p>
